@@ -1,0 +1,107 @@
+{
+  "version": 3,
+  "policy": "user-provided-and-generated-assets",
+  "generatedImages": [
+    {
+      "assetTags": "card-01-* through card-12-* (48 atlas cells)",
+      "file": "public/assets/cards/hwatu-basic-atlas-generated-v4-aligned.png",
+      "generatedAt": "2026-08-06",
+      "tool": "OpenAI image generation",
+      "mode": "style-transfer edit",
+      "source": "source-assets/cards/hwatu-basic-atlas.png",
+      "promptLog": "docs/PROMPTS/prompt-2026-08-06-hwatu-generated-v3.md",
+      "notes": "The 48 generated card regions were extracted at their detected borders and rebuilt as an exact 8x6 atlas of 160x240 (2:3) cells."
+    },
+    {
+      "assetTags": "card-01-* through card-12-* (48 individual faces)",
+      "file": "public/assets/cards/hwatu/*.webp",
+      "fallbackFile": "public/assets/cards/hwatu/native/*.png",
+      "generatedAt": "2026-08-06",
+      "tool": "asset extraction pipeline",
+      "mode": "atlas crop and normalize",
+      "notes": "Each 320x480 WebP has a lossless PNG fallback; the aligned atlas remains the shared final fallback."
+    },
+    {
+      "assetTags": "talisman:* (58 cards)",
+      "file": "public/assets/generated/talismans/*.webp",
+      "generatedAt": "2026-08-07",
+      "tool": "OpenAI image generation",
+      "mode": "text-to-image atlas generation",
+      "notes": "Four 4x4 atlases cropped into 256x384 (2:3) Korean hanji talisman cards."
+    },
+    {
+      "assetTags": "book:* (14 cards), painter:* (15), forbidden:* (10), legacy pack:* (2 source illustrations) and boss:* (4)",
+      "file": "public/assets/generated/{books,painters,forbidden,packs,bosses}/*.webp",
+      "generatedAt": "2026-08-07",
+      "tool": "OpenAI image generation",
+      "mode": "text-to-image atlas generation",
+      "notes": "45 portrait gameplay cards cropped to 256x384 (2:3)."
+    },
+    {
+      "assetTags": "card-effect:*, enhancement:*, edition:* and seal:*",
+      "file": "public/assets/generated/{card-effects,modifiers}/*.webp",
+      "generatedAt": "2026-08-07",
+      "tool": "OpenAI image generation",
+      "mode": "text-to-image atlas generation",
+      "notes": "28 compact square overlay seals cropped to 256x256."
+    },
+    {
+      "assetTags": "start-deck:* (5 card backs), forbidden:eight-directions and boss:fog-screen",
+      "file": "public/assets/generated/{start-decks,forbidden,bosses}/*.webp",
+      "generatedAt": "2026-08-10",
+      "tool": "OpenAI image generation",
+      "mode": "individual text-to-image generation",
+      "notes": "Five distinct 320x480 starter-deck backs plus two 512x768 current-rule card illustrations. Red deck uses repeating plum-blossom and neung-hwa motifs with no radial ray composition."
+    },
+    {
+      "assetTags": "season:* (4 contract encounters), pack:* (11 bundles), boss:* (8 completed boss portraits)",
+      "file": "public/assets/generated/{seasons,packs,bosses}/*.webp",
+      "generatedAt": "2026-08-10",
+      "tool": "OpenAI image generation",
+      "mode": "individual text-to-image generation and WebP normalization",
+      "notes": "Four season-specific Joseon encounter scenes, category-readable card/book/talisman/burn bundles, and the eight previously missing current-rule boss portraits. All prompts prohibited text, flags, radial ray motifs, and Japanese visual symbols."
+    }
+  ],
+  "userProvidedImages": [
+    {
+      "assetTags": "card-01-* through card-12-* (48 atlas cells)",
+      "file": "source-assets/cards/hwatu-basic-atlas.png",
+      "displayFile": "public/assets/cards/hwatu-basic-atlas-generated-v4-aligned.png",
+      "providedAt": "2026-08-06",
+      "rightsNote": "User stated that project use has been cleared"
+    }
+  ],
+  "externalImages": [],
+  "assetTagAttribute": "data-asset-tag",
+  "filenameRule": "Map the tag category to public/assets/generated/{plural-directory}/ and save the tag slug as {slug}.webp",
+  "example": {
+    "assetTag": "talisman:goblin-mirror",
+    "file": "public/assets/generated/talismans/goblin-mirror.webp"
+  },
+  "tagSources": [
+    "game/content/cards.ts",
+    "game/content/card-effects.ts",
+    "game/content/yaku.ts",
+    "game/content/talismans.ts",
+    "game/content/upgrades.ts",
+    "game/content/bosses.ts",
+    "game/content/meta.ts",
+    "game/content/stages.ts",
+    "app/GameApp.tsx"
+  ],
+  "categories": [
+    "cards",
+    "yakus",
+    "talismans",
+    "painters",
+    "books",
+    "forbidden",
+    "bosses",
+    "enhancements",
+    "editions",
+    "seals",
+    "stages",
+    "ui",
+    "effects"
+  ]
+}

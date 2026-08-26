@@ -1,0 +1,294 @@
+:where(.title-screen, .run-end-screen) {
+  --screen-ink: #1d1b18;
+  --screen-paper: #f7f0df;
+  --screen-paper-deep: #e5d8ba;
+  --screen-line: #b7a783;
+  --screen-muted: #6d6559;
+  --screen-red: #9f3029;
+  --screen-blue: #315b76;
+  --screen-green: #315c43;
+  --screen-gold: #b08129;
+  --screen-focus: #1675d1;
+  box-sizing: border-box;
+  width: min(90rem, 100%);
+  margin-inline: auto;
+  padding: clamp(0.8rem, 2.5vw, 2rem);
+  color: var(--screen-ink);
+  font-family: var(--font-geist-sans, Pretendard, "Noto Sans KR", system-ui, sans-serif);
+}
+
+:where(.title-screen, .run-end-screen) *,
+:where(.title-screen, .run-end-screen) *::before,
+:where(.title-screen, .run-end-screen) *::after {
+  box-sizing: inherit;
+}
+
+:where(.title-screen, .run-end-screen) button {
+  font: inherit;
+}
+
+:where(.title-screen, .run-end-screen) button:focus-visible {
+  outline: 3px solid var(--screen-focus);
+  outline-offset: 3px;
+}
+
+.screen-button {
+  display: inline-flex;
+  min-height: 2.8rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--screen-line);
+  border-radius: 0.65rem;
+  background: #fffdf7;
+  color: var(--screen-ink);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.screen-button--primary {
+  border-color: var(--screen-red);
+  background: var(--screen-red);
+  color: white;
+}
+
+.screen-button:disabled,
+:where(.title-screen, .run-end-screen) button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.screen-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.screen-section-heading p,
+.screen-section-heading h2 { margin: 0; }
+.screen-section-heading p {
+  color: var(--screen-red);
+  font: 800 0.65rem/1.2 var(--font-geist-mono, monospace);
+  letter-spacing: 0.12em;
+}
+.screen-section-heading h2 { margin-top: 0.18rem; font-size: clamp(1.05rem, 2vw, 1.4rem); }
+.screen-section-heading > span {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--screen-line);
+  border-radius: 999px;
+  color: var(--screen-muted);
+  font-size: 0.7rem;
+}
+
+.tutorial-coach {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--screen-blue, #315b76);
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, #eef7fb, #fffdf7);
+  color: var(--screen-ink, #1d1b18);
+  box-shadow: 0 0.55rem 1.4rem rgb(35 63 79 / 12%);
+}
+.tutorial-coach__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+.tutorial-coach__meta > strong {
+  color: var(--screen-blue, #315b76);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+.tutorial-coach__meta > span {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--screen-blue, #315b76);
+  color: white;
+  font: 800 0.65rem/1.2 var(--font-geist-mono, monospace);
+}
+.tutorial-coach__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 0.85fr);
+  gap: 0.8rem;
+}
+.tutorial-coach__about,
+.tutorial-coach__action {
+  min-width: 0;
+}
+.tutorial-coach__about > span,
+.tutorial-coach__action > span {
+  display: block;
+  margin-bottom: 0.22rem;
+  color: var(--screen-muted, #6d6559);
+  font-size: 0.63rem;
+  font-weight: 800;
+}
+.tutorial-coach__about h2,
+.tutorial-coach__about p,
+.tutorial-coach__action strong,
+.tutorial-coach__action small {
+  margin: 0;
+}
+.tutorial-coach__about h2 { font-size: 1rem; }
+.tutorial-coach__about p {
+  margin-top: 0.25rem;
+  color: var(--screen-muted, #6d6559);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+.tutorial-coach__action {
+  padding: 0.62rem 0.72rem;
+  border-left: 4px solid var(--screen-red, #9f3029);
+  border-radius: 0.55rem;
+  background: #fff4e5;
+}
+.tutorial-coach__action strong,
+.tutorial-coach__action small { display: block; }
+.tutorial-coach__action strong { color: var(--screen-red, #9f3029); font-size: 0.82rem; }
+.tutorial-coach__action small { margin-top: 0.3rem; color: var(--screen-muted, #6d6559); font-size: 0.65rem; }
+.tutorial-coach__progress {
+  width: 100%;
+  height: 0.32rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #d7e2e7;
+  color: var(--screen-blue, #315b76);
+}
+.tutorial-coach__progress::-webkit-progress-bar { background: #d7e2e7; }
+.tutorial-coach__progress::-webkit-progress-value { background: var(--screen-blue, #315b76); }
+.tutorial-coach__progress::-moz-progress-bar { background: var(--screen-blue, #315b76); }
+
+@media (max-width: 700px) {
+  .tutorial-coach__content { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 420px) {
+  .screen-section-heading { align-items: start; }
+  .tutorial-coach { padding: 0.75rem; }
+}
+
+
+/* ===========================================================================
+   TUTORIAL SPOTLIGHT
+   Dims the screen and cuts a hole around one element. The hole is an outward
+   box-shadow, so the dim layer and the cut-out are the same element.
+   =========================================================================== */
+
+.tutorial-spotlight {
+  position: fixed;
+  z-index: 900;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tutorial-spotlight__hole {
+  position: absolute;
+  border: 2px solid #f0c96a;
+  border-radius: 0.6rem;
+  box-shadow:
+    0 0 0 9999px rgb(12 10 8 / 78%),
+    0 0 1.6rem rgb(240 201 106 / 45%);
+  pointer-events: none;
+  transition: top 140ms ease, left 140ms ease, width 140ms ease, height 140ms ease;
+}
+
+.tutorial-spotlight__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgb(12 10 8 / 78%);
+  pointer-events: auto;
+}
+
+/* The highlighted element is lifted above the dim layer so it stays clickable. */
+/* Catches clicks everywhere except the hole. Invisible — the hole's shadow
+   already paints the dim. */
+.tutorial-spotlight__block {
+  position: absolute;
+  pointer-events: auto;
+}
+
+.tutorial-target {
+  position: relative;
+  z-index: 901;
+}
+
+.tutorial-spotlight__callout {
+  position: absolute;
+  z-index: 902;
+  width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.85rem 1rem;
+  border: 1px solid #6b5a33;
+  border-radius: 0.75rem;
+  background: linear-gradient(165deg, #2c2620, #1d1915);
+  box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 55%);
+  color: #f2ead8;
+  pointer-events: auto;
+}
+.tutorial-spotlight__callout:not([style]) {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tutorial-spotlight__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+.tutorial-spotlight__meta strong { color: #f0c96a; font-size: 0.6rem; letter-spacing: 0.08em; }
+.tutorial-spotlight__meta span { color: #9a9184; font-size: 0.6rem; font-weight: 800; }
+
+.tutorial-spotlight__callout h2 { margin: 0 0 0.25rem; font-size: 1.02rem; letter-spacing: -0.02em; }
+.tutorial-spotlight__callout p { margin: 0; color: #c5bcab; font-size: 0.74rem; line-height: 1.6; }
+
+.tutorial-spotlight__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+.tutorial-spotlight__next {
+  min-height: 2.2rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #6d1f19;
+  border-radius: 0.5rem;
+  background: #a5322a;
+  color: #fff6ee;
+  font-weight: 900;
+  cursor: pointer;
+}
+.tutorial-spotlight__hint {
+  flex: 1 1 auto;
+  padding: 0.3rem 0.6rem;
+  border: 1px dashed #6b5a33;
+  border-radius: 0.5rem;
+  color: #f0c96a;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 800;
+}
+.tutorial-spotlight__skip {
+  margin-left: auto;
+  min-height: 2.2rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #4a4436;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #8e8577;
+  font-size: 0.66rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-spotlight__hole { transition: none; }
+}

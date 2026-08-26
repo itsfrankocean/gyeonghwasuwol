@@ -1,0 +1,49 @@
+{
+  "name": "flower-board-go",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "build:pages": "node scripts/build-github-pages.mjs",
+    "start": "vinext start",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "assets:check": "node scripts/check-runtime-assets.mjs",
+    "styles:check": "node scripts/check-style-budget.mjs",
+    "verify": "npm run assets:check && npm run styles:check && npm run test && npm run typecheck && npm run lint && npm run build"
+  },
+  "dependencies": {
+    "animejs": "4.5.0",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "1.51.2",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/jsdom": "^27.0.0",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.5",
+    "@vitejs/plugin-rsc": "0.5.34",
+    "axe-core": "^4.13.0",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.3.0",
+    "jsdom": "^30.0.1",
+    "react-server-dom-webpack": "19.2.8",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vinext": "0.0.45",
+    "vite": "8.2.1",
+    "vitest": "4.1.10",
+    "wrangler": "4.120.1"
+  },
+  "type": "module"
+}

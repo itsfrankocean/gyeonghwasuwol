@@ -1,0 +1,2048 @@
+:where(.asset-placeholder, .hwatu-card, .collection-board, .talisman-strip, .play-rail, .game-modal) {
+  --game-ink: #1d1b18;
+  --game-paper: #f7f0df;
+  --game-paper-deep: #e8dcc2;
+  --game-red: #a5322a;
+  --game-blue: #315b76;
+  --game-gold: #b1832f;
+  --game-green: #315c43;
+  --game-muted: #6f675b;
+  --game-line: #b9aa8c;
+  --game-focus: #1675d1;
+  box-sizing: border-box;
+  color: var(--game-ink);
+  font-family: var(--font-geist-sans, Pretendard, "Noto Sans KR", system-ui, sans-serif);
+}
+
+:where(.asset-placeholder, .hwatu-card, .collection-board, .talisman-strip, .play-rail, .game-modal) *,
+:where(.asset-placeholder, .hwatu-card, .collection-board, .talisman-strip, .play-rail, .game-modal) *::before,
+:where(.asset-placeholder, .hwatu-card, .collection-board, .talisman-strip, .play-rail, .game-modal) *::after {
+  box-sizing: inherit;
+}
+
+.asset-placeholder {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.35rem 0.55rem;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem;
+  border: 1px dashed var(--game-line);
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--game-paper) 88%, white);
+  text-align: left;
+}
+
+.asset-placeholder--card { background: #fffdf6; }
+.asset-placeholder--score { background: #fff6d9; }
+.asset-placeholder--collection { background: #edf4ef; }
+.asset-placeholder--talisman { background: #f2ecf8; }
+.asset-placeholder--boss { background: #f8e8e5; }
+
+.asset-placeholder--compact {
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.5rem;
+}
+
+.asset-placeholder__marker {
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  min-width: 2.7rem;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 0.35rem;
+  color: var(--game-muted);
+  font: 700 0.58rem/1 var(--font-geist-mono, monospace);
+  letter-spacing: 0.08em;
+}
+
+.asset-placeholder__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.asset-placeholder__label,
+.asset-placeholder__description,
+.asset-placeholder__tag {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.asset-placeholder__label { font-size: 0.82rem; }
+.asset-placeholder__description { color: var(--game-muted); font-size: 0.68rem; }
+.asset-placeholder__tag {
+  color: var(--game-blue);
+  font-size: 0.62rem;
+}
+
+/*
+  CARD FRAME.
+
+  The atlas cell is exactly 160x240 and the printed red border runs to the very
+  edge of it — measured, not assumed. Every ring we used to paint on top (a 1px
+  card border, a 3px inset white shadow, a dashed inner rule, a 2px border on
+  the art) ate into that printed border and made the picture look cropped. The
+  art IS the card now: no rings, and `aspect-ratio` sits on the card itself.
+*/
+.hwatu-card {
+  /*
+    DEFAULT ACCENT. Do not delete this line again.
+
+    The month badge paints itself with
+    `color-mix(in srgb, var(--card-accent) 88%, black)`, and only the
+    `--enhancement-*` classes define `--card-accent`. When the face became
+    full-bleed art this default went missing, so on every ordinary card the
+    custom property was undefined -- which makes the whole `background`
+    declaration invalid at computed-value time and drops it to transparent.
+    The badge lost its plate and near-white text was left printed directly onto
+    cream card art. Not faint: invisible.
+  */
+  --card-accent: var(--game-red);
+
+  /*
+    Pointer position, written by HwatuCard on every move, as a plain number
+    from -0.5 to 0.5. Degrees are worked out here rather than in JS so the
+    amplitude is a stylesheet decision -- `prefers-reduced-motion` turns it
+    down at the bottom of this file without JS knowing anything about it.
+  */
+  --pointer-x: 0;
+  --pointer-y: 0;
+  --tilt-max: 22deg;
+  --lift: 0rem;
+  --pop: 1;
+  --shine-x: 50%;
+  --shine-y: 50%;
+  --shadow-x: 0px;
+  --shadow-y: 8px;
+  /* 1 only while the pointer is actually on the card. */
+  --shine-on: 0;
+  position: relative;
+  display: block;
+  width: 7.7rem;
+  height: auto;
+  aspect-ratio: 2 / 3;
+  flex: 0 0 7.7rem;
+  /*
+    NEVER let a container stretch this. A grid or flex item defaults to
+    `align-self: stretch`, which gives the card a definite height — and once
+    both width and height are definite, `aspect-ratio` is ignored outright and
+    the picture squashes. That is what turned the pack picker into a row of
+    tall thin cards.
+  */
+  align-self: center;
+  justify-self: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  box-shadow: var(--shadow-x) var(--shadow-y) 1rem rgb(20 13 8 / 45%);
+  color: var(--game-ink);
+  font: inherit;
+  text-align: left;
+  /*
+    THE WHOLE CARD TILTS.
+
+    `perspective` lives inside the transform chain rather than on a parent, so
+    the card is self-contained — it tilts the same way in the hand, in the deck
+    screen and in a pack. An earlier version rotated an inner plate, which left
+    the month badge and the marks sitting flat on top like stickers on glass.
+    Lift and pop are variables so selection and hover compose with the tilt
+    instead of overwriting it.
+  */
+  transform:
+    perspective(620px)
+    translateY(var(--lift))
+    scale(var(--pop))
+    rotateX(calc(var(--pointer-y) * var(--tilt-max) * -1))
+    rotateY(calc(var(--pointer-x) * var(--tilt-max)));
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  transition: transform 75ms ease-out, box-shadow 75ms ease-out, filter 140ms ease;
+}
+
+.hwatu-card > * { position: absolute; }
+button.hwatu-card { cursor: pointer; }
+/* Tilt is for every card, so the hover cues hang off `.hwatu-card`, not off
+   `button` — the deck screen and the pack picker render plain articles. */
+.hwatu-card:hover { --shine-on: 1; --pop: 1.025; }
+button.hwatu-card:not(.hwatu-card--selected):hover:not(:disabled) { --lift: -0.42rem; }
+button.hwatu-card:active:not(:disabled) { --lift: 0.08rem; --pop: 0.97; }
+
+/*
+  SELECTED STATE.
+
+  A thin red edge was invisible once the picture filled the whole face, so three
+  cues stack instead: a lift out of the fan, a gold ring that reads against any
+  card art, and (in game.css) a light wash over the rest of the hand. The wash
+  is deliberately gentle — a hard dim made the selection obvious but hid the
+  cards you still have to choose from.
+*/
+.hwatu-card--selected {
+  --lift: -1.15rem;
+  --pop: 1.06;
+  z-index: 5;
+  box-shadow:
+    0 0 0 3px var(--game-gold),
+    0 0 0 5px rgb(165 50 42 / 45%),
+    0 0.9rem 1.5rem rgb(20 13 8 / 45%);
+}
+.hwatu-card--scoring { box-shadow: 0 0 0 2px var(--game-gold), 0 0.45rem 1rem rgb(36 30 20 / 25%); }
+.hwatu-card--split-jit:not(.hwatu-card--selected) { box-shadow: 0 0 0 2px #2f5d8c, 0 0.35rem 0.8rem rgb(20 13 8 / 35%); }
+.hwatu-card--split-kkeut:not(.hwatu-card--selected) { box-shadow: 0 0 0 2px #8c2f3d, 0 0.35rem 0.8rem rgb(20 13 8 / 35%); }
+.hwatu-card--disabled { opacity: 0.55; filter: grayscale(0.45); }
+
+/* The picture, edge to edge. Nothing is drawn on top of it. */
+.hwatu-card__art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+  background-color: var(--game-paper);
+  image-rendering: pixelated;
+  inset: 0;
+  object-fit: contain;
+  object-position: center;
+  transform: translateZ(2px);
+}
+
+.card-art-frame {
+  box-sizing: border-box;
+  padding: 2px;
+  overflow: hidden;
+  background: #130d09;
+}
+.card-art-frame__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+}
+.card-art-frame__image[hidden] { display: none; }
+
+/* Pack abilities are printed into the whole card face. No text plaque. */
+.hwatu-card__effect-field {
+  z-index: 3;
+  overflow: hidden;
+  border: 3px solid var(--effect-edge);
+  border-radius: inherit;
+  background: var(--effect-face);
+  box-shadow: inset 0 0 0 2px rgb(255 244 214 / 54%);
+  inset: 1.5%;
+  pointer-events: none;
+  transform: translateZ(9px);
+}
+
+/* 곳간패: 네모 구멍 엽전 세 닢. */
+.hwatu-card--effect-keeper-coin {
+  --effect-edge: #8d6418;
+  --effect-face:
+    radial-gradient(circle at 24% 25%, #5a3d12 0 5%, #f5ca58 5.5% 12%, #7c5312 12.5% 15%, transparent 15.5%),
+    radial-gradient(circle at 75% 52%, #5a3d12 0 6%, #f5ca58 6.5% 14%, #7c5312 14.5% 17%, transparent 17.5%),
+    radial-gradient(circle at 34% 79%, #5a3d12 0 5%, #f5ca58 5.5% 12%, #7c5312 12.5% 15%, transparent 15.5%),
+    linear-gradient(145deg, rgb(187 130 28 / 22%), transparent 58%);
+}
+/* 짝패: 두 고리가 서로 물리는 쌍가락지. */
+.hwatu-card--effect-partner-boost {
+  --effect-edge: #792d55;
+  --effect-face:
+    radial-gradient(circle at 40% 51%, transparent 0 20%, rgb(241 142 187 / 78%) 21% 27%, transparent 28%),
+    radial-gradient(circle at 63% 51%, transparent 0 20%, rgb(255 218 164 / 82%) 21% 27%, transparent 28%),
+    linear-gradient(135deg, rgb(105 34 74 / 22%), transparent 62%);
+}
+/* 무거운 달: 납판과 수직 추. */
+.hwatu-card--effect-heavy-month {
+  --effect-edge: #262421;
+  --effect-face:
+    radial-gradient(ellipse at 25% 74%, rgb(31 29 27 / 88%) 0 10%, transparent 11%),
+    radial-gradient(ellipse at 75% 74%, rgb(31 29 27 / 88%) 0 10%, transparent 11%),
+    linear-gradient(90deg, transparent 0 22%, rgb(40 37 34 / 82%) 23% 28%, transparent 29% 71%, rgb(40 37 34 / 82%) 72% 77%, transparent 78%),
+    linear-gradient(0deg, rgb(24 22 20 / 54%), transparent 58%);
+}
+/* 메아리패: 물결처럼 번지는 동심원. */
+.hwatu-card--effect-echo {
+  --effect-edge: #24654f;
+  --effect-face: repeating-radial-gradient(circle at 50% 54%, transparent 0 9%, rgb(139 238 197 / 76%) 10% 13%, transparent 14% 22%);
+}
+/* 행운패: 복주머니에서 퍼지는 부채꼴 광선. */
+.hwatu-card--effect-drawn-luck {
+  --effect-edge: #3e7653;
+  --effect-face:
+    repeating-conic-gradient(from -18deg at 50% 92%, rgb(237 205 93 / 58%) 0 7deg, transparent 8deg 22deg),
+    radial-gradient(circle at 50% 91%, rgb(58 133 83 / 78%) 0 12%, transparent 13%);
+}
+/* 광 취급: 카드 한쪽에 뜬 큰 금빛 해. */
+.hwatu-card--effect-as-bright {
+  --effect-edge: #a77c19;
+  --effect-face:
+    repeating-conic-gradient(from 0deg at 78% 22%, rgb(255 227 111 / 68%) 0 5deg, transparent 6deg 16deg),
+    radial-gradient(circle at 78% 22%, #fff0a0 0 13%, #dca92e 14% 20%, transparent 21%);
+}
+/* 동물 취급: 일정한 발자국 군집. */
+.hwatu-card--effect-as-animal {
+  --effect-edge: #60401f;
+  --effect-face:
+    radial-gradient(ellipse at 25% 22%, rgb(82 51 25 / 80%) 0 6%, transparent 7%),
+    radial-gradient(ellipse at 38% 34%, rgb(82 51 25 / 80%) 0 9%, transparent 10%),
+    radial-gradient(ellipse at 66% 62%, rgb(255 225 174 / 78%) 0 7%, transparent 8%),
+    radial-gradient(ellipse at 77% 76%, rgb(255 225 174 / 78%) 0 10%, transparent 11%);
+}
+/* 띠 취급: 카드 전체를 휘감는 붉은 비단 띠. */
+.hwatu-card--effect-as-ribbon {
+  --effect-edge: #9e2b25;
+  --effect-face: repeating-linear-gradient(154deg, transparent 0 15%, rgb(194 43 35 / 74%) 16% 25%, rgb(255 216 166 / 76%) 26% 28%, transparent 29% 45%);
+}
+/* 덧피: 가장자리를 따라 맺힌 붉은 피방울. */
+.hwatu-card--effect-extra-pi {
+  --effect-edge: #a22d25;
+  --effect-face:
+    radial-gradient(ellipse at 8% 18%, rgb(198 51 42 / 88%) 0 5%, transparent 6%),
+    radial-gradient(ellipse at 9% 49%, rgb(198 51 42 / 88%) 0 7%, transparent 8%),
+    radial-gradient(ellipse at 10% 81%, rgb(198 51 42 / 88%) 0 6%, transparent 7%),
+    radial-gradient(ellipse at 91% 30%, rgb(198 51 42 / 88%) 0 6%, transparent 7%),
+    radial-gradient(ellipse at 90% 69%, rgb(198 51 42 / 88%) 0 8%, transparent 9%);
+}
+/* 쌍패: 좌우로 정확히 복제된 이중 판. */
+.hwatu-card--effect-twin-kind {
+  --effect-edge: #74304f;
+  --effect-face:
+    linear-gradient(90deg, transparent 0 44%, rgb(255 228 198 / 86%) 45% 48%, rgb(92 35 69 / 78%) 49% 52%, rgb(255 228 198 / 86%) 53% 56%, transparent 57%),
+    repeating-linear-gradient(90deg, rgb(120 45 82 / 24%) 0 7%, transparent 8% 16%);
+}
+/* 금칠패: 화면 전체에 흩어진 금박 조각. */
+.hwatu-card--effect-gilded {
+  --effect-edge: #a87618;
+  --effect-face:
+    radial-gradient(ellipse at 18% 20%, rgb(255 218 99 / 88%) 0 6%, transparent 7%),
+    radial-gradient(ellipse at 70% 15%, rgb(255 237 160 / 84%) 0 4%, transparent 5%),
+    radial-gradient(ellipse at 48% 47%, rgb(255 210 78 / 82%) 0 7%, transparent 8%),
+    radial-gradient(ellipse at 82% 70%, rgb(255 232 140 / 88%) 0 6%, transparent 7%),
+    radial-gradient(ellipse at 26% 84%, rgb(255 215 88 / 82%) 0 5%, transparent 6%);
+}
+/* 고집패: 네 귀퉁이를 못으로 박고 쇠띠로 고정. */
+.hwatu-card--effect-stubborn {
+  --effect-edge: #555b60;
+  --effect-face:
+    radial-gradient(circle at 10% 10%, #e2e5e5 0 4%, #444a4d 5% 7%, transparent 8%),
+    radial-gradient(circle at 90% 10%, #e2e5e5 0 4%, #444a4d 5% 7%, transparent 8%),
+    radial-gradient(circle at 10% 90%, #e2e5e5 0 4%, #444a4d 5% 7%, transparent 8%),
+    radial-gradient(circle at 90% 90%, #e2e5e5 0 4%, #444a4d 5% 7%, transparent 8%),
+    linear-gradient(45deg, transparent 0 47%, rgb(98 105 109 / 68%) 48% 52%, transparent 53%),
+    linear-gradient(-45deg, transparent 0 47%, rgb(98 105 109 / 68%) 48% 52%, transparent 53%);
+}
+
+/*
+  Final production art. The procedural gradients above remain as a loading
+  fallback; these transparent, Korean-craft overlays replace them once the
+  image asset is available. Every effect owns a different material and outline.
+*/
+.hwatu-card__effect-field {
+  border: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  box-shadow: inset 0 0 0 2px rgb(255 244 214 / 38%);
+  filter: drop-shadow(0 1px 1px rgb(18 10 7 / 42%));
+  inset: 0;
+}
+.hwatu-card__effect-field::after {
+  position: absolute;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--shine-x) var(--shine-y), rgb(255 255 255 / 72%) 0 5%, rgb(255 232 168 / 22%) 11%, transparent 28%);
+  content: "";
+  inset: 0;
+  opacity: calc(0.08 + var(--shine-on) * 0.28);
+  mix-blend-mode: screen;
+}
+.hwatu-card--effect-keeper-coin { --effect-face: url("/assets/cards/effects/effect-keeper-coin.webp"); }
+.hwatu-card--effect-partner-boost { --effect-face: url("/assets/cards/effects/effect-partner-boost.webp"); }
+.hwatu-card--effect-heavy-month { --effect-face: url("/assets/cards/effects/effect-heavy-month.webp"); }
+.hwatu-card--effect-echo { --effect-face: url("/assets/cards/effects/effect-echo.webp"); }
+.hwatu-card--effect-drawn-luck { --effect-face: url("/assets/cards/effects/effect-drawn-luck.webp"); }
+.hwatu-card--effect-as-bright { --effect-face: url("/assets/cards/effects/effect-as-bright.webp"); }
+.hwatu-card--effect-as-animal { --effect-face: url("/assets/cards/effects/effect-as-animal.webp"); }
+.hwatu-card--effect-as-ribbon { --effect-face: url("/assets/cards/effects/effect-as-ribbon.webp"); }
+.hwatu-card--effect-extra-pi { --effect-face: url("/assets/cards/effects/effect-extra-pi.webp"); }
+.hwatu-card--effect-twin-kind { --effect-face: url("/assets/cards/effects/effect-twin-kind.webp"); }
+.hwatu-card--effect-gilded { --effect-face: url("/assets/cards/effects/effect-gilded.webp"); }
+.hwatu-card--effect-stubborn { --effect-face: url("/assets/cards/effects/effect-stubborn.webp"); }
+
+.hwatu-card--effect-gilded .hwatu-card__effect-field::after,
+.hwatu-card--effect-as-bright .hwatu-card__effect-field::after,
+.hwatu-card--effect-echo .hwatu-card__effect-field::after,
+.hwatu-card--effect-partner-boost .hwatu-card__effect-field::after {
+  opacity: calc(0.18 + var(--shine-on) * 0.52);
+}
+
+/*
+  MATERIAL — 각인. What the card is made OF.
+
+  This layer is the reason four modifiers can sit on one card and still be
+  read. It occupies the whole face, so it never competes for the corners the
+  seal and the effect token use, and it is a different KIND of statement from
+  the finish above it: a card can be made of glass AND be foil-stamped.
+
+  Two of these used to be drawn as surfaces instead, which quietly meant a
+  유리패 or a 복패 could never show its 판본 at all.
+
+  Each material is picked to match what the 각인 actually does, so the face is a
+  reminder rather than decoration — 돌패 loses its month and kind, so the stone
+  genuinely buries the picture; 강철패 only pays while it stays in hand, so it
+  looks untouched and cold.
+
+  Alphas stay low. The picture underneath is the card's identity and no
+  modifier is allowed to cost you the ability to tell 3월 from 7월.
+*/
+/*
+  MATERIAL — 각인. What the card is made OF.
+
+  This layer is the reason four modifiers can sit on one card and still be
+  read. It occupies the whole face, so it never competes for the corners the
+  seal and the effect token use, and it is a different KIND of statement from
+  the finish above it: a card can be made of glass AND be foil-stamped.
+
+  WHAT KILLS A MATERIAL: multiplying a colour the card already has.
+
+  A hwatu card is red, black, gold and cream. Multiply a red wash over it and
+  the cream turns pinkish, the black stays black, and the red areas — of which
+  there are many — do not move at all. The result is camouflage. 홍칠, 만능화 and
+  금전패 all failed exactly this way, and no amount of nudging the alpha fixes
+  it, because the problem is hue, not strength.
+
+  What works instead:
+  - separate on VALUE, not hue. A material that is much lighter or much darker
+    than the art reads instantly; one that is merely a different colour does not
+  - use a STRUCTURE the woodblock never draws — perfect circles, straight
+    parallel rules, hard cracks. The art has no geometry in it at all
+  - flood first, then put the structure on top in `screen`, so it survives the
+    black areas as well as the cream ones
+
+  That last point needs two blend modes, which one element cannot have. So the
+  awkward materials are built as ::before (the flood) plus ::after (the
+  structure), and the container itself stays neutral — see the z-index note.
+
+  Alphas on the flood stay under the level where the month becomes unreadable.
+  돌패 is the deliberate exception: it throws its month and kind away, so
+  burying the picture is the honest thing to draw.
+*/
+
+/*
+  NO `z-index` HERE, for the same reason as `.hwatu-card__shine`.
+
+  `.hwatu-card > *` makes this absolutely positioned, and absolute + a numeric
+  z-index is a stacking context — which would seal the pseudo-elements off from
+  the card art and leave their `mix-blend-mode` blending against nothing. Left
+  on `auto` it paints in DOM order: above the art, below the finish.
+*/
+.hwatu-card__material {
+  border-radius: 0.5rem;
+  inset: 0;
+  pointer-events: none;
+  transform: translateZ(4px);
+}
+.hwatu-card__material::before,
+.hwatu-card__material::after {
+  position: absolute;
+  border-radius: inherit;
+  content: "";
+  inset: 0;
+}
+
+/*
+  먹칠 — dipped in ink, with a wet line where it stopped.
+
+  A soft dark haze was the wrong idea entirely. Half the deck is mostly black
+  already — 1월, 8월, 11월 are enormous fields of it — so darkening a card is
+  the one thing that says nothing at all. It was the same camouflage failure as
+  홍칠 and 금전패, just with black instead of a hue.
+
+  What fixes it is the boundary, not the darkness: a hard straight edge with a
+  bright meniscus riding on it. The woodblock never cuts a straight line, so the
+  edge alone identifies the card, and the pair carries everywhere — the dark
+  field shows against cream, the bright line shows against black.
+
+  Tilted a few degrees off level so it reads as a liquid line rather than a UI
+  divider, and it stops at 58% so the top of the picture is untouched.
+*/
+.hwatu-card__material--inked::before {
+  background: linear-gradient(186deg, transparent 0 58%, rgb(16 13 11 / 82%) 60%);
+  mix-blend-mode: multiply;
+}
+.hwatu-card__material--inked::after {
+  background: linear-gradient(
+    186deg,
+    transparent 0 57.2%,
+    rgb(158 180 198 / 82%) 57.2% 59.2%,
+    transparent 59.2%
+  );
+  mix-blend-mode: screen;
+}
+
+/*
+  홍칠 — lacquered red.
+
+  Was thin red stripes in multiply, which is the camouflage case above: red
+  stripes on a card covered in red things. It is a flood now, so the card stops
+  being a cream card with red on it and becomes a RED card — no ordinary hwatu
+  card is uniformly red, so the silhouette alone gives it away. The gloss band
+  on top is what says lacquer rather than paint.
+*/
+/*
+  The flood is deliberately weak, and the strokes do the work.
+
+  It was at 86% and the picture went with it — you could see the card was red
+  and no longer which month it was, which is a bad trade for a modifier. The
+  identity of a card outranks the identity of its 각인, always.
+
+  Dropping it to 42% costs nothing, because the flood was never what made this
+  legible: the bright strokes on top are. A tint says the colour, a pattern
+  says which modifier, and only the pattern needs to be loud.
+*/
+.hwatu-card__material--scarlet::before {
+  background: linear-gradient(158deg, rgb(146 22 18 / 48%), rgb(192 44 32 / 36%));
+  mix-blend-mode: multiply;
+}
+/*
+  Thick HORIZONTAL brush strokes. Direction is doing real work here: 유리패,
+  오방색 and 음각 are all diagonal or vertical rules, so a diagonal gloss on this
+  one would have been the fourth set of slanted stripes on the card and told
+  you nothing. Horizontal is unclaimed, and it also happens to be how a brush
+  actually lays lacquer down.
+*/
+.hwatu-card__material--scarlet::after {
+  background: repeating-linear-gradient(
+    3deg,
+    rgb(255 224 202 / 72%) 0 2.4%,
+    rgb(255 152 118 / 46%) 2.4% 4.4%,
+    transparent 4.4% 16%
+  );
+  mix-blend-mode: screen;
+}
+
+/*
+  만능화 — overgrown, because it counts as every kind.
+
+  Green was the worst possible choice on its own: 5월 and 6월 are full of
+  leaves, so green blobs read as more leaves. The flood fixes the value and the
+  pale shoots climbing across it are far lighter than anything the art contains,
+  so they hold up over the black areas too.
+*/
+/* Same trade as 홍칠: a tint you can see through, and a net you cannot miss. */
+.hwatu-card__material--wild::before {
+  background: linear-gradient(150deg, rgb(20 78 50 / 46%), rgb(40 116 78 / 34%));
+  mix-blend-mode: multiply;
+}
+/*
+  A LATTICE, not scattered dots. Six small bright blobs were too little ink to
+  see at hand size, and worse, green blobs on 5월 and 6월 read as more leaves —
+  a camouflage problem that no amount of extra contrast solves.
+
+  Crossing it in two directions is the fix: every other pattern on a card runs
+  one way, so a net is unmistakable at a glance, and a net over the picture is
+  a fair thing for "counts as every kind" to look like.
+*/
+.hwatu-card__material--wild::after {
+  background:
+    repeating-linear-gradient(58deg, rgb(212 252 218 / 74%) 0 2%, transparent 2% 15%),
+    repeating-linear-gradient(-58deg, rgb(212 252 218 / 64%) 0 2%, transparent 2% 15%);
+  mix-blend-mode: screen;
+}
+
+/*
+  유리패 — hard diagonal panes with a lit edge. Brittle, and it shows.
+  Already works: white against woodblock art is a value the card never contains.
+*/
+.hwatu-card__material--glass {
+  background: repeating-linear-gradient(
+    122deg,
+    rgb(255 255 255 / 52%) 0 3px,
+    rgb(176 220 246 / 30%) 3px 7px,
+    transparent 7px 22px
+  );
+  box-shadow: inset 0 0 0 2px rgb(214 240 255 / 55%);
+  mix-blend-mode: screen;
+}
+
+/* 강철패 — brushed metal, vertical grain, cold. Pays for being left alone. */
+.hwatu-card__material--steel {
+  background:
+    linear-gradient(90deg, rgb(196 214 226 / 34%), transparent 22% 78%, rgb(196 214 226 / 34%)),
+    repeating-linear-gradient(90deg, rgb(226 238 246 / 26%) 0 1px, transparent 1px 4px);
+  box-shadow: inset 0 0 0 2px rgb(150 168 180 / 60%);
+  mix-blend-mode: screen;
+}
+
+/*
+  돌패 — the loudest material, on purpose.
+
+  A stone card has thrown its month and its kind away, so it is barely a hwatu
+  card any more. Burying the picture is the honest way to say that; anything
+  gentler leaves the player reading a month that no longer counts.
+
+  It was invisible for a stupid reason: `mix-blend-mode: hard-light` with a
+  mid-grey source is very nearly a no-op. Hard-light multiplies where the
+  source is below 50% and screens where it is above, so a colour sitting right
+  at the middle returns almost exactly the backdrop. All that careful stone
+  colour was being computed and then thrown away. It composites normally now,
+  and the art ghosts through at the alpha it is given rather than by accident.
+*/
+.hwatu-card__material--stone::before {
+  background:
+    radial-gradient(circle at 26% 32%, rgb(88 83 75 / 55%) 0 9%, transparent 10%),
+    radial-gradient(circle at 68% 58%, rgb(88 83 75 / 45%) 0 12%, transparent 13%),
+    radial-gradient(circle at 44% 80%, rgb(88 83 75 / 40%) 0 7%, transparent 8%),
+    linear-gradient(158deg, #9b9386 0%, #7a736a 55%, #635d55 100%);
+  box-shadow: inset 0 0 0 2px rgb(72 67 60 / 75%);
+  opacity: 0.88;
+}
+/* Cracks. Straight hard lines — the one thing the woodblock art never draws. */
+.hwatu-card__material--stone::after {
+  background:
+    linear-gradient(74deg, transparent 0 37%, rgb(46 42 37 / 72%) 37% 38.2%, transparent 38.2%),
+    linear-gradient(-58deg, transparent 0 61%, rgb(46 42 37 / 60%) 61% 62%, transparent 62%),
+    linear-gradient(96deg, transparent 0 19%, rgb(46 42 37 / 48%) 19% 19.8%, transparent 19.8%);
+  mix-blend-mode: multiply;
+}
+
+/*
+  금전패 — strung cash. Pays out if you keep it, so it is literally money.
+
+  The old version was small gold rings in multiply. Gold on a card that already
+  has gold, darkened rather than lit: they vanished into the art. Big bright
+  rings in `screen` instead — a perfect circle is a shape the woodblock never
+  cuts, and lighting them means they show on the black areas as well.
+*/
+.hwatu-card__material--coin::before {
+  background: linear-gradient(160deg, rgb(206 158 46 / 46%), rgb(160 112 22 / 34%));
+  mix-blend-mode: multiply;
+}
+/*
+  Three 엽전, drawn OPAQUE and large.
+
+  Thin lit rings kept losing to the art. A coin is a solid object lying on the
+  card, so it is painted as one — no blend mode at all, so nothing underneath
+  can dilute it, and it looks the same over cream, over black and over red.
+
+  `ellipse 11% 7.3%` rather than `circle`: the card is 2:3, and a circle sized
+  in percentages of a 2:3 box comes out as an egg. 11 x 2 = 7.3 x 3, so these
+  land round.
+*/
+.hwatu-card__material--coin::after {
+  background-image:
+    radial-gradient(ellipse 11% 7.3% at 25% 23%,
+      rgb(58 42 18) 0 30%, rgb(250 208 96) 30% 74%, rgb(142 98 20) 74% 100%, transparent 100%),
+    radial-gradient(ellipse 11% 7.3% at 74% 47%,
+      rgb(58 42 18) 0 30%, rgb(246 202 88) 30% 74%, rgb(142 98 20) 74% 100%, transparent 100%),
+    radial-gradient(ellipse 10% 6.6% at 40% 77%,
+      rgb(58 42 18) 0 30%, rgb(240 196 82) 30% 74%, rgb(142 98 20) 74% 100%, transparent 100%);
+}
+
+/*
+  복패 — unstable. Everything it does is a dice roll, so it will not hold still.
+
+  The scanlines were 1px at 26% and simply too small to see. Thicker bands, a
+  harder colour split, and a torn slice that jumps position — the tear is what
+  actually sells it, because a card that is momentarily BROKEN reads faster
+  than a card that is merely tinted.
+*/
+.hwatu-card__material--fortune::before {
+  background: repeating-linear-gradient(
+    0deg,
+    rgb(236 96 168 / 46%) 0 2px,
+    transparent 2px 5px,
+    rgb(96 226 214 / 42%) 5px 7px,
+    transparent 7px 11px
+  );
+  animation: hwatu-fortune-jitter 1.5s steps(4, end) infinite;
+  mix-blend-mode: screen;
+}
+.hwatu-card__material--fortune::after {
+  background: linear-gradient(
+    0deg,
+    transparent 0 42%,
+    rgb(255 246 250 / 55%) 42% 47%,
+    rgb(96 226 214 / 40%) 47% 49%,
+    transparent 49%
+  );
+  animation: hwatu-fortune-tear 1.9s steps(1, end) infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes hwatu-fortune-jitter {
+  0%, 68% { opacity: 0.55; transform: translateY(0); }
+  74% { opacity: 1; transform: translateY(-2px); }
+  80% { opacity: 0.6; transform: translateY(2px); }
+  86% { opacity: 1; transform: translateY(-1px); }
+  92%, 100% { opacity: 0.55; transform: translateY(0); }
+}
+
+@keyframes hwatu-fortune-tear {
+  0%, 62% { opacity: 0; transform: translateY(0); }
+  66% { opacity: 1; transform: translateY(-28%) translateX(4%); }
+  72% { opacity: 0; transform: translateY(-28%); }
+  78% { opacity: 1; transform: translateY(22%) translateX(-5%); }
+  84%, 100% { opacity: 0; transform: translateY(22%); }
+}
+/*
+  SURFACE — 판본. A PATTERN laid over the card.
+
+  This was "the shape of the reflection" and it did not work. Reflections are
+  made of light, and light on a busy woodblock print is just more busy — you
+  cannot tell a sweeping highlight from a bright bit of the picture.
+
+  The one that did read was the concentric rings on 자개, and the reason is that
+  a ring is a GRAPHIC, not a glint. Geometry survives on top of art because the
+  art contains no geometry: the woodblock draws petals, birds and brushstrokes,
+  and never once draws a circle, a straight rule or a hard band. So all four
+  editions are now flat graphic patterns, bright enough to hold over the black
+  areas, and they are told apart by shape at a glance:
+
+      금박   torn square sheets      자개   concentric rings
+      오방색 five hard bands          음각   cut grooves
+
+  This does mean 각인 and 판본 both cover the whole face, so they are kept on
+  different visual jobs: the material owns COLOUR (it floods and tints), the
+  finish owns PATTERN (it draws bright geometry on top). A red lacquered card
+  with gold leaf on it looks like exactly that.
+
+  Still no rainbow — 오방색 is the five NAMED colours 청·적·황·백·흑, which is a
+  fixed traditional set, and the white and black bands are what make it carry.
+*/
+.hwatu-card__surface {
+  z-index: 2;
+  border-radius: 0.5rem;
+  inset: 0;
+  pointer-events: none;
+  transform: translateZ(6px);
+}
+
+/*
+  금박 — beaten leaf, scattered.
+
+  Four big axis-aligned rectangles looked stuck on, and the reason is that CSS
+  cannot rotate an individual background layer: every block was perfectly
+  square to the card, which nothing on a gilded object ever is. Small flakes at
+  varying sizes and aspect ratios have no alignment to read as wrong, and old
+  gilding really does craze into scattered islands like this.
+
+  Also keeps it clear of the 무거운 달 foil, which is a single travelling sweep.
+*/
+.hwatu-card__surface--gold_leaf {
+  background:
+    radial-gradient(ellipse 6% 3% at 17% 13%, rgb(255 226 138 / 92%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 3% 4% at 31% 22%, rgb(255 240 186 / 82%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 5% 2.5% at 62% 16%, rgb(255 218 116 / 88%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 2.5% 3.5% at 79% 29%, rgb(255 234 164 / 78%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 4% 5% at 22% 38%, rgb(255 222 128 / 86%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 6.5% 2.8% at 48% 44%, rgb(255 240 180 / 80%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 3% 4.5% at 72% 52%, rgb(255 216 112 / 90%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 5% 3% at 14% 58%, rgb(255 232 156 / 76%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 3.5% 2.5% at 38% 66%, rgb(255 222 130 / 88%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 5.5% 4% at 66% 73%, rgb(255 238 172 / 82%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 2.8% 3% at 26% 82%, rgb(255 218 120 / 86%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 4.5% 2.6% at 55% 89%, rgb(255 234 158 / 78%) 0 100%, transparent 100%),
+    radial-gradient(ellipse 3% 3.6% at 84% 84%, rgb(255 224 134 / 84%) 0 100%, transparent 100%);
+  animation: hwatu-leaf-breathe 3.8s ease-in-out infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes hwatu-leaf-breathe {
+  0%, 100% { opacity: 0.78; }
+  50% { opacity: 1; }
+}
+
+/*
+  자개 — inlaid shell. The rings, kept and turned up.
+
+  Nacre grows in concentric layers, so the pattern is also the true one. Two
+  centres rather than one, because a single ring set reads as a target.
+*/
+.hwatu-card__surface--mother_of_pearl {
+  background:
+    repeating-radial-gradient(
+      circle at 26% 79%,
+      rgb(216 250 255 / 62%) 0 2px,
+      rgb(168 216 240 / 30%) 2px 4px,
+      transparent 4px 11px
+    ),
+    repeating-radial-gradient(
+      circle at 78% 22%,
+      rgb(206 242 252 / 52%) 0 2px,
+      transparent 2px 9px
+    );
+  mix-blend-mode: screen;
+}
+
+/*
+  오방색 — 청·적·황·백·흑, as five hard bands.
+
+  Composited normally rather than blended. Every blend mode available washes
+  at least one of the five out — `overlay` kills the white, `screen` kills the
+  black — and losing either one is losing the half of the set that does the
+  work, because they are the only two with real value contrast against the art.
+*/
+.hwatu-card__surface--five_color {
+  background: repeating-linear-gradient(
+    118deg,
+    rgb(46 106 170 / 60%) 0 5%,
+    rgb(198 54 44 / 60%) 5% 10%,
+    rgb(232 190 60 / 58%) 10% 15%,
+    rgb(248 244 234 / 62%) 15% 20%,
+    rgb(30 26 22 / 58%) 20% 25%,
+    transparent 25% 50%
+  );
+}
+
+/*
+  음각 — cut INTO the card.
+
+  A groove is a dark wall and a lit wall side by side; that pairing is the
+  whole illusion, and it is why this reads as carved rather than as stripes.
+  Normal compositing so both walls survive on cream and on black alike.
+*/
+.hwatu-card__surface--engraved {
+  background: repeating-linear-gradient(
+    96deg,
+    rgb(18 14 10 / 62%) 0 2px,
+    rgb(255 250 232 / 52%) 2px 4px,
+    transparent 4px 13px
+  );
+}
+
+/*
+  MODIFIER READABILITY PASS.
+
+  The face-wide treatment says "this card is modified" before any text is
+  read. The small plaque only answers "which one?". Its glyph is deliberately
+  redundant with colour and pattern, so no modifier depends on hue alone.
+*/
+.hwatu-card__modifier-badge {
+  z-index: 6;
+  top: 0.3rem;
+  right: 0.28rem;
+  display: grid;
+  grid-template-columns: 1.05rem auto;
+  min-height: 1.12rem;
+  align-items: center;
+  border: 2px solid #241812;
+  border-radius: 0.18rem;
+  background: #f4ead3;
+  box-shadow: 2px 2px 0 rgb(26 17 12 / 70%);
+  color: #271a13;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateZ(28px);
+}
+.hwatu-card__modifier-badge b {
+  display: grid;
+  align-self: stretch;
+  place-items: center;
+  background: #33251d;
+  color: #fff2ce;
+  font-size: 0.66rem;
+}
+.hwatu-card__modifier-badge small {
+  padding: 0 0.28rem;
+  font-size: 0.47rem;
+  font-weight: 950;
+  white-space: nowrap;
+}
+.hwatu-card__modifier-badge--surface { top: 1.65rem; }
+.hwatu-card__modifier-badge--surface b { background: #9a6a18; }
+
+/* At a 7rem hand size these must change the silhouette, not merely tint it. */
+.hwatu-card__material--inked::before {
+  background: linear-gradient(184deg, transparent 0 50%, rgb(12 10 9 / 96%) 52%);
+  mix-blend-mode: normal;
+}
+.hwatu-card__material--inked::after {
+  background: linear-gradient(184deg, transparent 0 48.5%, #d8e9ed 49% 52%, transparent 52.5%);
+  filter: drop-shadow(0 2px 0 rgb(0 0 0 / 65%));
+}
+.hwatu-card__material--scarlet::before {
+  background: linear-gradient(155deg, rgb(179 25 19 / 62%), rgb(111 12 10 / 48%));
+  mix-blend-mode: normal;
+}
+.hwatu-card__material--scarlet::after {
+  background: repeating-linear-gradient(2deg, rgb(255 222 183 / 82%) 0 3px, rgb(121 13 9 / 24%) 3px 5px, transparent 5px 17px);
+  mix-blend-mode: screen;
+}
+.hwatu-card__material--wild::before {
+  background: linear-gradient(150deg, rgb(16 91 52 / 64%), rgb(17 45 29 / 48%));
+  mix-blend-mode: normal;
+}
+.hwatu-card__material--wild::after {
+  background:
+    repeating-linear-gradient(58deg, rgb(226 255 214 / 88%) 0 3px, transparent 3px 18px),
+    repeating-linear-gradient(-58deg, rgb(226 255 214 / 82%) 0 3px, transparent 3px 18px);
+  mix-blend-mode: screen;
+}
+.hwatu-card__material--stone::before { opacity: 0.97; }
+.hwatu-card__material--fortune::before { opacity: 0.88; }
+
+/* Glass, metal and money catch the pointer light instead of wearing a static wash. */
+.hwatu-card__material--glass {
+  background:
+    radial-gradient(circle at var(--shine-x) var(--shine-y), rgb(255 255 255 / 96%) 0 8%, transparent 29%),
+    linear-gradient(62deg, transparent 0 44%, rgb(238 250 255 / 92%) 44% 46%, transparent 46%),
+    linear-gradient(-38deg, transparent 0 66%, rgb(185 226 249 / 86%) 66% 68%, transparent 68%),
+    repeating-linear-gradient(122deg, rgb(220 245 255 / 72%) 0 4px, rgb(89 172 218 / 42%) 4px 8px, transparent 8px 24px);
+  box-shadow: inset 0 0 0 3px rgb(188 230 255 / 88%);
+  mix-blend-mode: normal;
+}
+.hwatu-card__material--steel {
+  background:
+    linear-gradient(112deg, transparent 0 28%, rgb(255 255 255 / 88%) 42%, transparent 58%) var(--shine-x) 0 / 180% 100%,
+    repeating-linear-gradient(90deg, rgb(218 229 237 / 62%) 0 3px, rgb(70 88 101 / 34%) 3px 7px);
+  box-shadow: inset 0 0 0 3px rgb(115 135 150 / 78%);
+  mix-blend-mode: normal;
+}
+.hwatu-card__material--coin::before {
+  background:
+    radial-gradient(circle at var(--shine-x) var(--shine-y), rgb(255 247 183 / 82%) 0 8%, transparent 28%),
+    linear-gradient(160deg, rgb(225 173 52 / 55%), rgb(151 98 12 / 42%));
+}
+
+.hwatu-card__surface--gold_leaf {
+  background:
+    radial-gradient(circle at var(--shine-x) var(--shine-y), rgb(255 248 190 / 86%) 0 8%, transparent 30%),
+    repeating-linear-gradient(128deg, rgb(224 164 32 / 54%) 0 9px, rgb(255 228 132 / 68%) 9px 14px, transparent 14px 30px);
+  mix-blend-mode: screen;
+}
+.hwatu-card__surface--mother_of_pearl {
+  background:
+    repeating-radial-gradient(circle at 26% 79%, rgb(220 255 251 / 84%) 0 3px, rgb(245 181 224 / 48%) 3px 6px, transparent 6px 14px),
+    linear-gradient(128deg, rgb(127 234 224 / 24%), rgb(248 170 218 / 30%), rgb(255 222 136 / 24%));
+  mix-blend-mode: screen;
+}
+.hwatu-card__surface--five_color {
+  background: repeating-linear-gradient(118deg, rgb(37 105 176 / 72%) 0 6%, rgb(202 44 36 / 72%) 6% 12%, rgb(238 190 42 / 70%) 12% 18%, rgb(255 250 234 / 72%) 18% 24%, rgb(25 21 18 / 72%) 24% 30%, transparent 30% 48%);
+}
+.hwatu-card__surface--engraved {
+  background: repeating-linear-gradient(96deg, rgb(15 11 8 / 76%) 0 3px, rgb(255 250 232 / 68%) 3px 6px, transparent 6px 15px);
+}
+
+/* Editions are finishes: all bright finishes react to the same physical light. */
+.hwatu-card__surface::after {
+  position: absolute;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--shine-x) var(--shine-y), rgb(255 255 255 / 88%) 0 5%, rgb(255 244 203 / 34%) 11%, transparent 31%);
+  content: "";
+  inset: 0;
+  opacity: calc(0.3 + var(--shine-on) * 0.7);
+  mix-blend-mode: screen;
+}
+.hwatu-card__surface--mother_of_pearl::after {
+  background:
+    radial-gradient(circle at var(--shine-x) var(--shine-y), rgb(255 255 255 / 96%) 0 5%, rgb(135 246 224 / 48%) 11%, rgb(247 154 212 / 38%) 20%, transparent 35%);
+}
+.hwatu-card__surface--five_color::after {
+  background: linear-gradient(112deg, transparent 0 34%, rgb(255 255 255 / 78%) 45%, transparent 58%) var(--shine-x) 0 / 180% 100%;
+}
+.hwatu-card__surface--engraved::after { opacity: 0.18; }
+
+/* A seal is a physical lacquer stamp: stable location, unique glyph and trigger. */
+.hwatu-card__seal {
+  z-index: 7;
+  top: 39%;
+  right: -0.3rem;
+  display: grid;
+  width: 2.15rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 3px double #fff0d0;
+  border-radius: 50%;
+  background: var(--seal-colour);
+  box-shadow: 0 0 0 2px #2a1712, 0.18rem 0.22rem 0 rgb(30 18 12 / 55%);
+  color: white;
+  pointer-events: none;
+  transform: translateZ(34px) rotate(5deg);
+}
+.hwatu-card__seal::before,
+.hwatu-card__seal::after {
+  position: absolute;
+  border: 1px solid rgb(255 244 215 / 72%);
+  content: "";
+  inset: 0.2rem;
+  transform: rotate(45deg);
+}
+.hwatu-card__seal::after { inset: 0.34rem; transform: rotate(0); }
+.hwatu-card__seal b { position: relative; z-index: 1; font-size: 0.68rem; line-height: 1; text-shadow: 1px 1px 0 #35140f; }
+.hwatu-card__seal small {
+  position: absolute;
+  top: calc(100% + 0.28rem);
+  right: 0;
+  width: max-content;
+  max-width: 5.4rem;
+  padding: 0.18rem 0.28rem;
+  border: 1px solid #2a1712;
+  border-radius: 0.14rem;
+  background: #f7eed8;
+  color: #271a13;
+  font-size: 0.43rem;
+  font-weight: 950;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.hwatu-card__seal--yellow { --seal-colour: #bd831b; }
+.hwatu-card__seal--red { --seal-colour: #b52c24; }
+.hwatu-card__seal--blue { --seal-colour: #245f95; }
+.hwatu-card__seal--purple { --seal-colour: #713d7b; }
+
+@media (prefers-reduced-motion: reduce) {
+  /* The animation moved onto the pseudo-elements, so it has to be stopped
+     there — stopping it on the container silently does nothing. */
+  .hwatu-card__material--fortune::before { animation: none; opacity: 0.7; }
+  /* The tear is a jump, not a drift. Nothing to slow down; it just goes. */
+  .hwatu-card__material--fortune::after { animation: none; opacity: 0; }
+  .hwatu-card__surface--gold_leaf { animation: none; }
+}
+/*
+  THE FOIL — the Pokémon-card shine, for one effect at a time.
+
+  Two layers doing two different jobs, because either alone fails. The warm
+  pool of light says where the light source is; the fine diagonal grating is
+  what makes it read as FOIL rather than a smudge, and it is masked to the pool
+  so the whole card does not turn into a hatched mess. A grating everywhere is
+  the mistake that makes cheap holo effects look like a texture overlay.
+
+  It stays on one warm hue on purpose. The art is red, black, gold and cream
+  already; a spectrum across it is noise, not shine.
+
+  Off-pointer it glints slowly on its own, so a foil card is findable in a fan
+  of eight without hovering every one. On-pointer the idle sweep stops and the
+  pool takes over — two moving highlights at once just look broken.
+*/
+/*
+  NO `z-index` HERE, deliberately.
+
+  `.hwatu-card > *` makes this absolutely positioned, and absolute + a numeric
+  z-index would turn it into a stacking context — which would seal its two
+  pseudo-elements off from the card art underneath, so their `mix-blend-mode`
+  would have nothing but transparency to blend against and the foil would
+  flatten into a plain milky overlay. Left on `auto` it paints in DOM order:
+  after the art, before the month badge and the marks, which is exactly right.
+*/
+.hwatu-card__shine {
+  overflow: hidden;
+  border-radius: inherit;
+  inset: 0;
+  pointer-events: none;
+  transform: translateZ(8px);
+}
+
+/*
+  The lit pool and its grating, as one element.
+
+  Both live on the same pseudo so a single mask can confine them together —
+  and each pseudo carries its own opacity gate, which is the whole reason the
+  pool is not on the container. Fading the container would take the idle sweep
+  down with it, and the sweep is precisely what has to show when the pool does
+  not.
+*/
+.hwatu-card__shine--gilt::after {
+  position: absolute;
+  background:
+    repeating-linear-gradient(
+      108deg,
+      rgb(255 246 214 / 46%) 0 1px,
+      rgb(255 226 150 / 20%) 1px 2px,
+      transparent 2px 7px
+    ),
+    radial-gradient(
+      farthest-corner at var(--shine-x) var(--shine-y),
+      rgb(255 249 226 / 58%) 0%,
+      rgb(255 227 158 / 22%) 26%,
+      transparent 58%
+    );
+  content: "";
+  inset: 0;
+  mask-image: radial-gradient(
+    farthest-side at var(--shine-x) var(--shine-y),
+    #000 0%,
+    rgb(0 0 0 / 45%) 40%,
+    transparent 72%
+  );
+  mix-blend-mode: screen;
+  opacity: var(--shine-on);
+  transition: opacity 160ms ease;
+}
+
+/*
+  THE RESTING STATE — this is the one that has to sell it.
+
+  A foil card is spotted in the shop, in a row of four, with the pointer
+  nowhere near it. So the work happens here, not on hover: an always-on foil
+  grain gives the card a texture you can read at a glance and at small size,
+  and a broad highlight travels across it every few seconds to say the texture
+  is metallic rather than printed.
+
+  Both live on one pseudo-element as two background layers, moved by
+  `background-position`, because ::before and ::after are all we get and the
+  lit pool already owns ::after. It also means the glint slides ACROSS the
+  grain, which is what a real foil does — an independent overlay sliding over a
+  flat card is the tell that gives cheap holo effects away.
+
+  The grain is held at low alpha on purpose. Under `screen` it barely touches
+  the cream of the card and lifts the black ink into a warm sheen, which is
+  where the eye catches it. Push the alpha up and the black stops reading as
+  ink and the card just looks fogged.
+*/
+.hwatu-card__shine--gilt::before {
+  position: absolute;
+  background:
+    /* the travelling glint */
+    linear-gradient(
+      100deg,
+      transparent 34%,
+      rgb(255 246 214 / 40%) 44%,
+      rgb(255 236 184 / 62%) 50%,
+      rgb(255 246 214 / 40%) 56%,
+      transparent 66%
+    ),
+    /* the grain that is always there */
+    repeating-linear-gradient(
+      108deg,
+      rgb(255 240 198 / 17%) 0 1px,
+      rgb(255 226 150 / 7%) 1px 2px,
+      transparent 2px 6px
+    );
+  background-repeat: no-repeat, repeat;
+  background-size: 240% 100%, auto;
+  /* Parked off the right edge, so reduced motion freezes it out of sight
+     instead of leaving a bright band stuck across the card. */
+  background-position: 165% 0, 0 0;
+  animation: hwatu-gilt-sweep 4.2s ease-in-out infinite;
+  content: "";
+  inset: 0;
+  mix-blend-mode: screen;
+  /* Dimmed under the pointer rather than switched off: the grain should stay
+     while the pool takes over, or the card looks like it lost its finish at
+     the moment you reached for it. */
+  opacity: calc(1 - var(--shine-on) * 0.45);
+  transition: opacity 160ms ease;
+}
+
+@keyframes hwatu-gilt-sweep {
+  0% { background-position: -65% 0, 0 0; }
+  42%, 100% { background-position: 165% 0, 0 0; }
+}
+
+/*
+  MARKS — one per modifier, each in its own corner.
+
+  This is the part that has to survive doubling up. Four modifiers can be on one
+  card, so each category owns a fixed anchor and no two marks can ever land on
+  each other. They sit slightly outside the card edge so they read as objects
+  ON the card rather than parts of the picture.
+*/
+.hwatu-card__mark {
+  z-index: 5;
+  display: block;
+  width: 29%;
+  aspect-ratio: 1;
+  /*
+    A hard offset shadow, not a soft glow. These sit on top of dense woodblock
+    art, and a blurred halo reads as part of the picture; a crisp dark edge
+    reads as a separate object lying on it. Pixel sprites also stay pixel-sharp
+    under an offset shadow and go mushy under a blurred one.
+  */
+  filter: drop-shadow(0 1px 0 rgb(20 13 8 / 80%)) drop-shadow(1px 0 0 rgb(20 13 8 / 55%));
+  pointer-events: none;
+}
+/*
+  Only two anchors are in use — the 낙관 and the effect token, on opposite
+  edges. The other two are kept because a fifth category would want one, and
+  because leaving the map complete is what stops the next person putting two
+  things in the same corner.
+*/
+.hwatu-card__mark--top-right { top: 5%; right: 5%; }
+.hwatu-card__mark--bottom-left { bottom: 4%; left: 5%; }
+/* bottom-right is the 낙관 anchor. Nothing is drawn there yet — the slot is
+   reserved so the effect token cannot creep into it. See docs/HANDOFF-SEALS.md. */
+.hwatu-card__mark--bottom-right { right: 4%; bottom: 3.5%; }
+.hwatu-card__mark--mid-left { top: 34%; left: 4%; width: 32%; }
+.card-mark { display: block; width: 100%; height: 100%; }
+
+/* Month marker — the only text that stays on the face. */
+.hwatu-card__corner {
+  position: absolute;
+  z-index: 2;
+  top: 0.28rem;
+  left: 0.28rem;
+  display: grid;
+  min-width: 1.3rem;
+  transform: translateZ(26px);
+  place-items: center;
+  padding: 0.04rem 0.22rem;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 0.32rem;
+  background: color-mix(in srgb, var(--card-accent) 88%, black);
+  color: #fffaf0;
+  font-size: 0.88rem;
+  font-weight: 950;
+  line-height: 1.2;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 45%);
+  pointer-events: none;
+}
+
+/* 짓고땡 split marker. The selection is read as 짓(월 합) + 끗패(배수), so the
+   two halves need to be tellable apart at a glance in the fanned hand. */
+.hwatu-card__split {
+  position: absolute;
+  z-index: 2;
+  top: 0.28rem;
+  right: 0.28rem;
+  display: grid;
+  min-width: 1.15rem;
+  place-items: center;
+  padding: 0.04rem 0.2rem;
+  border: 1px solid rgb(255 255 255 / 62%);
+  border-radius: 0.32rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1.25;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 45%);
+  pointer-events: none;
+}
+
+.hwatu-card--split-jit .hwatu-card__split {
+  background: #2f5d8c;
+  color: #f2f8ff;
+}
+
+.hwatu-card--split-kkeut .hwatu-card__split {
+  background: #8c2f3d;
+  color: #fff2f4;
+}
+
+/* box-shadow does not stack across rules, so the 짓·끗 ring stands down while
+   the card is lifted — selection is the louder signal and must win. */
+.hwatu-card--split-jit:not(.hwatu-card--selected) { box-shadow: 0 0 0 2px #2f5d8c inset; }
+.hwatu-card--split-kkeut:not(.hwatu-card--selected) { box-shadow: 0 0 0 2px #8c2f3d inset; }
+.hwatu-card--dense .hwatu-card__split { min-width: 1rem; font-size: 0.64rem; }
+
+/* Hover card — holds everything the face no longer prints. */
+.hwatu-card__hint {
+  position: absolute;
+  z-index: 60;
+  bottom: calc(100% + 0.4rem);
+  left: 50%;
+  display: grid;
+  width: max-content;
+  max-width: 12rem;
+  gap: 0.06rem;
+  padding: 0.4rem 0.55rem;
+  /*
+    Cancels the card's tilt so the text stays flat while the card leans. The
+    card is `preserve-3d`, so without this the panel leans with it and the
+    text skews.
+
+    These MUST stay the exact inverse of the rotations on `.hwatu-card`. They
+    also have to reference variables that exist: an undefined custom property
+    invalidates the whole declaration, which would take `translateX(-50%)` down
+    with it and drop the panel off to one side rather than merely un-tilting it.
+  */
+  transform:
+    translateX(-50%)
+    translateY(0.25rem)
+    rotateX(calc(var(--pointer-y) * var(--tilt-max)))
+    rotateY(calc(var(--pointer-x) * var(--tilt-max) * -1));
+  border: 1px solid #4a4436;
+  border-radius: 0.5rem;
+  background: #241f19;
+  box-shadow: 0 0.5rem 1.2rem rgb(0 0 0 / 45%);
+  opacity: 0;
+  text-align: left;
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events: none;
+}
+.hwatu-card__hint::after {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  transform: translate(-50%, -55%) rotate(45deg);
+  border-right: 1px solid #4a4436;
+  border-bottom: 1px solid #4a4436;
+  background: #241f19;
+  content: "";
+}
+/* The hover card only appears on hover or keyboard focus. */
+.hwatu-card:hover .hwatu-card__hint,
+.hwatu-card:focus-visible .hwatu-card__hint {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.hwatu-card__hint b { color: #f7f0df; font-size: 0.8rem; }
+.hwatu-card__hint em { color: #e8b34f; font-size: 0.68rem; font-style: normal; font-weight: 800; }
+.hwatu-card__hint i { color: #9fada3; font-size: 0.62rem; font-style: normal; }
+.hwatu-card__hint u { color: #a9a0f0; font-size: 0.6rem; text-decoration: none; }
+.hwatu-card__hint s { color: #e08078; font-size: 0.6rem; text-decoration: none; }
+
+/* Dense face for the fanned hand. */
+.hwatu-card--dense {
+  width: auto;
+  height: clamp(6.2rem, 24vh, 10.4rem);
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+.hwatu-card--dense .hwatu-card__corner { min-width: 1.1rem; font-size: 0.72rem; }
+.hwatu-card--dense::before { inset: 0.12rem; border-radius: 0.36rem; }
+
+/* Godori gets its own labelled 3-slot track. */
+.collection-board__track--godori {
+  --track-color: #2f6f7a;
+  --track-glow: rgb(47 111 122 / 42%);
+}
+.collection-board__track--godori .collection-board__slot {
+  display: grid;
+  width: auto;
+  min-width: 1.9rem;
+  height: 1.25rem;
+  padding: 0 0.3rem;
+  place-items: center;
+  border-radius: 0.35rem;
+  color: #cfc6b6;
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.collection-board__track--godori .collection-board__slot--filled { color: #fffaf0; }
+
+/*
+  각인 accent — the colour the month badge and the selected ring pick up.
+
+  The old `--card-wash` and `--card-sheen` that used to live here are gone.
+  They had not been consumed by anything since the face became full-bleed art,
+  so every 각인 and every 판본 was reduced to a corner dot while the code still
+  looked as though it drew them. They are real layers now: see
+  `.hwatu-card__material` and `.hwatu-card__surface` above.
+*/
+.hwatu-card--enhancement-inked { --card-accent: #27231f; }
+.hwatu-card--enhancement-scarlet { --card-accent: #b52f28; }
+.hwatu-card--enhancement-wild { --card-accent: #3e7042; }
+.hwatu-card--enhancement-glass { --card-accent: #4c89a4; }
+.hwatu-card--enhancement-steel { --card-accent: #63717a; }
+.hwatu-card--enhancement-stone { --card-accent: #716d62; }
+.hwatu-card--enhancement-coin { --card-accent: #a67416; }
+.hwatu-card--enhancement-fortune { --card-accent: #9e315f; }
+
+.hwatu-card:focus-visible,
+.game-modal button:focus-visible {
+  outline: 3px solid var(--game-focus);
+  outline-offset: 3px;
+}
+
+.collection-board,
+.talisman-strip {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid var(--game-line);
+  border-radius: 0.9rem;
+  background: rgb(247 240 223 / 92%);
+}
+
+.collection-board__header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--game-paper-deep);
+}
+.collection-board__header > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+.collection-board__header span {
+  color: var(--game-muted);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.collection-board__header strong { font-size: 0.84rem; }
+.collection-board__header code {
+  max-width: 8.5rem;
+  overflow: hidden;
+  color: var(--game-blue);
+  font-size: 0.5rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-board__empty {
+  margin: 0;
+  color: var(--game-muted);
+  font-size: 0.78rem;
+}
+
+.collection-board__header > p {
+  max-width: 25rem;
+  margin: 0;
+  color: var(--game-muted);
+  font-size: 0.64rem;
+  text-align: right;
+}
+
+.collection-board__track {
+  --track-color: var(--game-gold);
+  --track-glow: rgb(177 131 47 / 42%);
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 0.27fr) minmax(0, 1fr);
+  min-width: 0;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--track-color) 38%, var(--game-line));
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--game-paper) 94%, var(--track-color));
+}
+
+.collection-board__track--animal {
+  --track-color: #426c4b;
+  --track-glow: rgb(66 108 75 / 42%);
+}
+
+.collection-board__track--ribbon {
+  --track-color: #a4443d;
+  --track-glow: rgb(164 68 61 / 40%);
+}
+
+.collection-board__track--chaff {
+  --track-color: #6f6252;
+  --track-glow: rgb(245 225 177 / 50%);
+}
+
+.collection-board__track-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+/*
+  IMAGE SLOT for the track's own picture.
+    .collection-board__icon[data-asset-tag="collection:bright-five-slots"] {
+      background-image: url("/assets/collection/bright.webp");
+    }
+*/
+.collection-board__icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed color-mix(in srgb, var(--track-color) 50%, var(--game-line));
+  border-radius: 0.4rem;
+  background-color: color-mix(in srgb, var(--game-paper) 70%, white);
+  background-position: center;
+  background-size: cover;
+}
+.collection-board__icon > span {
+  color: var(--game-muted);
+  font: 700 0.4rem/1 var(--font-geist-mono, monospace);
+}
+
+.collection-board__mark {
+  position: relative;
+  overflow: visible;
+  border: 2px solid color-mix(in srgb, var(--track-color) 78%, #fff4ce);
+  border-radius: 50%;
+  background: #261d15;
+  box-shadow:
+    inset 0 0 0 2px rgb(255 244 206 / 28%),
+    0 0.18rem 0.42rem rgb(20 12 7 / 28%);
+  isolation: isolate;
+}
+.collection-board__mark::before {
+  position: absolute;
+  z-index: 0;
+  border-radius: inherit;
+  content: "";
+  inset: 0.18rem;
+}
+.collection-board__mark > b {
+  position: relative;
+  z-index: 1;
+  color: #fff6df;
+  font-family: var(--font-serif, serif);
+  font-size: 0.88rem;
+  font-weight: 950;
+  line-height: 1;
+  text-shadow: 0 1px 0 #2a160d, 0 0 0.35rem rgb(255 238 178 / 55%);
+}
+.collection-board__mark--bright {
+  background: repeating-conic-gradient(from -8deg, #edbe48 0 8deg, #7a3a19 8deg 17deg);
+}
+.collection-board__mark--bright::before { background: radial-gradient(circle, #d8492d 0 45%, #4d1d15 48% 100%); }
+.collection-board__mark--animal { background: linear-gradient(145deg, #173e2d, #4f7d42); }
+.collection-board__mark--animal::before { background: radial-gradient(circle at 35% 28%, #dfca83 0 12%, transparent 13%), radial-gradient(circle at 65% 28%, #dfca83 0 12%, transparent 13%), #28533a; }
+.collection-board__mark--godori { background: linear-gradient(150deg, #182c47, #507994); }
+.collection-board__mark--godori::before { background: conic-gradient(from 20deg, #d9ebdf, #6aa0a5, #d9ebdf); clip-path: polygon(50% 0, 64% 35%, 100% 50%, 64% 65%, 50% 100%, 36% 65%, 0 50%, 36% 35%); }
+.collection-board__mark--ribbon { background: repeating-linear-gradient(135deg, #8e241e 0 0.3rem, #d24a35 0.3rem 0.6rem); }
+.collection-board__mark--ribbon::before { border: 1px solid #f0c489; border-radius: 0.18rem; background: #a72520; transform: rotate(-8deg); }
+.collection-board__mark--chaff { background: radial-gradient(circle at 22% 24%, #d6b96e 0 6%, transparent 7%), radial-gradient(circle at 74% 70%, #d6b96e 0 7%, transparent 8%), #24231f; }
+.collection-board__mark--chaff::before { border: 1px dotted #d6b96e; background: radial-gradient(circle, #605844 0 8%, transparent 9%); background-size: 0.35rem 0.35rem; }
+
+.collection-board__track-heading > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.04rem;
+}
+
+.collection-board__track-heading strong { font-size: 0.82rem; }
+.collection-board__track-heading span {
+  overflow: hidden;
+  color: var(--game-muted);
+  font-size: 0.57rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-board__track-heading > b {
+  display: grid;
+  flex: 0 0 auto;
+  width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--track-color);
+  color: #fffaf0;
+  font-size: 0.72rem;
+}
+
+.collection-board__track-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.collection-board__slots {
+  display: flex;
+  min-width: 0;
+  min-height: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+/* ------------------------------------------------------------------ *
+ * Picture rows.
+ *
+ * The 광 · 동물 · 고도리 · 띠 rows draw the real card from the atlas so the
+ * board doubles as a checklist: bright means collected, dim means still out
+ * there. Sizes are clamped to the rail width rather than fixed, because the
+ * row length now follows the deck and a burned or duplicated card changes it.
+ * ------------------------------------------------------------------ */
+.collection-board__cards {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0.26rem;
+  align-items: center;
+}
+
+.collection-card {
+  position: relative;
+  display: block;
+  width: clamp(1.3rem, 2.1vw, 1.75rem);
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
+  border-radius: 0.2rem;
+  transition: filter 140ms ease, opacity 140ms ease, transform 140ms ease;
+}
+
+.collection-card__art {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgb(23 17 12 / 55%);
+  border-radius: 0.2rem;
+  background-color: var(--game-paper);
+  image-rendering: pixelated;
+  inset: 0;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Not collected: clearly not yours yet, but the picture still has to be
+   recognisable — the row is a checklist, and you cannot check off a card you
+   cannot identify. */
+.collection-card--empty {
+  filter: grayscale(0.85) brightness(0.72) contrast(0.9);
+  opacity: 0.72;
+}
+
+/* In the hand being scored, not yet banked. */
+.collection-card--pending {
+  filter: grayscale(0.35) brightness(0.9);
+  opacity: 0.9;
+}
+
+.collection-card--pending .collection-card__art {
+  border-color: color-mix(in srgb, var(--track-color) 78%, white);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--track-color) 45%, transparent);
+}
+
+.collection-card--confirmed .collection-card__art {
+  border-color: color-mix(in srgb, var(--track-color) 82%, white);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--track-color) 55%, transparent),
+    0 0 0.55rem var(--track-glow);
+}
+
+.collection-card__month {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  padding: 0 0.15rem;
+  border-radius: 0.2rem 0 0.2rem 0;
+  background: rgb(23 17 12 / 72%);
+  color: #fff6e4;
+  font-size: 0.5rem;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+/*
+  A second copy is drawn as a card peeking out behind, then counted. The stack
+  is what stops the number reading as a score multiplier.
+*/
+.collection-card--stacked::before {
+  position: absolute;
+  z-index: 0;
+  border: 1px solid rgb(23 17 12 / 45%);
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--game-paper) 70%, #2d2a26);
+  content: "";
+  inset: 0.14rem -0.16rem -0.16rem 0.14rem;
+}
+
+.collection-card__count {
+  position: absolute;
+  z-index: 3;
+  right: -0.1rem;
+  bottom: -0.16rem;
+  min-width: 0.86rem;
+  padding: 0 0.14rem;
+  border: 1px solid rgb(255 255 255 / 40%);
+  border-radius: 0.28rem;
+  background: #2f3d5d;
+  color: #f2f8ff;
+  font-size: 0.48rem;
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.collection-card--confirmed .collection-card__count { background: #2f5d3a; }
+
+/* 쌍피 fills two notches on the 피 row, so the picture says so. */
+.collection-card__value {
+  position: absolute;
+  z-index: 3;
+  bottom: -0.14rem;
+  left: -0.1rem;
+  padding: 0 0.14rem;
+  border: 1px solid rgb(255 255 255 / 36%);
+  border-radius: 0.28rem;
+  background: #7a4a1f;
+  color: #ffeeda;
+  font-size: 0.46rem;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.collection-board__slot {
+  display: block;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid #756d60;
+  border-radius: 0.27rem;
+  background: #2d2a26;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 4%);
+  opacity: 0.42;
+}
+
+.collection-board__track--bright .collection-board__slot {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+}
+
+.collection-board__slot--filled {
+  border-color: color-mix(in srgb, var(--track-color) 82%, white);
+  background: var(--track-color);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--track-color) 22%, transparent),
+    0 0 0.8rem var(--track-glow);
+  opacity: 1;
+}
+
+.collection-board__slot--pending {
+  outline: 2px dashed color-mix(in srgb, var(--track-color) 72%, white);
+  outline-offset: 2px;
+}
+
+.collection-board__overflow {
+  padding: 0.15rem 0.38rem;
+  border-radius: 999px;
+  background: var(--track-color);
+  color: white;
+  font-size: 0.65rem;
+}
+
+.collection-board__milestones {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.collection-board__milestone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.12rem 0.32rem;
+  border: 1px solid var(--game-line);
+  border-radius: 999px;
+  background: rgb(38 34 29 / 5%);
+  color: var(--game-muted);
+  font-size: 0.55rem;
+}
+
+.collection-board__milestone > b { color: inherit; }
+.collection-board__milestone > em {
+  color: inherit;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.collection-board__milestone--active {
+  border-color: var(--track-color);
+  background: var(--track-color);
+  color: white;
+  box-shadow: 0 0 0.55rem var(--track-glow);
+}
+button.talisman-strip__item { cursor: pointer; }
+.game-modal__close,
+.game-modal__action {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--game-line);
+  border-radius: 0.55rem;
+  background: #fffdf7;
+  color: var(--game-ink);
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.talisman-strip__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.talisman-strip__header > span { color: var(--game-ink); font-size: 0.72rem; font-weight: 900; }
+.talisman-strip__header > em { color: var(--game-muted); font-size: 0.58rem; font-style: normal; }
+
+.talisman-strip__slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
+  gap: 0.35rem;
+  padding: 0.1rem;
+}
+.talisman-strip__item,
+.talisman-strip__empty {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+  padding: 0.3rem;
+  border: 1px solid var(--game-line);
+  border-radius: 0.5rem;
+  background: #fdfaf2;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+button.talisman-strip__item { cursor: pointer; }
+.talisman-strip__item--selected { border-color: #724d92; box-shadow: 0 0 0 2px rgb(114 77 146 / 18%); }
+.talisman-strip__item--sacrifice { border-color: #bd3b32; box-shadow: 0 0 0 2px rgb(189 59 50 / 35%); }
+.talisman-strip__item--disabled { opacity: 0.55; }
+.talisman-strip__item--sacrifice.talisman-strip__item--disabled { opacity: 1; filter: none; }
+.talisman-strip__sacrifice-badge {
+  position: absolute;
+  z-index: 8;
+  right: -0.25rem;
+  bottom: 1rem;
+  padding: 0.08rem 0.22rem;
+  border: 1px solid #f1c875;
+  background: #8f2922;
+  color: #fff5dc;
+  font-size: 0.48rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+/* Empty slots are outlines only — no label, no instructions. */
+.talisman-strip__empty {
+  min-height: 3.4rem;
+  border-style: dashed;
+  border-color: #5b5344;
+  background: rgb(255 255 255 / 4%);
+}
+
+.talisman-strip__art {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  place-content: center;
+  gap: 0.06rem;
+  padding: 0.15rem;
+  overflow: hidden;
+  border: 1px dashed var(--game-line);
+  border-radius: 0.32rem;
+  background-color: #fffdf6;
+  background-position: center;
+  background-size: cover;
+}
+.talisman-strip__art > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  object-fit: contain;
+  object-position: center;
+}
+.talisman-strip__art > span { color: var(--game-muted); font: 700 0.42rem/1.3 var(--font-geist-mono, monospace); }
+.talisman-strip__art > code {
+  overflow: hidden;
+  color: var(--game-blue);
+  font-size: 0.34rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.talisman-strip__name {
+  overflow: hidden;
+  font-size: 0.58rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hover card carries the effect text. */
+.talisman-strip__hint {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 0.4rem);
+  left: 50%;
+  display: grid;
+  width: max-content;
+  max-width: 14rem;
+  gap: 0.1rem;
+  padding: 0.45rem 0.6rem;
+  transform: translateX(-50%) translateY(-0.25rem);
+  border: 1px solid #4a4436;
+  border-radius: 0.5rem;
+  background: #241f19;
+  box-shadow: 0 0.5rem 1.2rem rgb(0 0 0 / 45%);
+  opacity: 0;
+  text-align: left;
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events: none;
+}
+.talisman-strip__item:hover .talisman-strip__hint,
+.talisman-strip__item:focus-visible .talisman-strip__hint {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.talisman-strip__hint b { color: #f7f0df; font-size: 0.76rem; }
+.talisman-strip__hint em { color: #c3a6e0; font-size: 0.6rem; font-style: normal; font-weight: 800; }
+.talisman-strip__hint p { margin: 0.1rem 0 0; color: #c9c0b2; font-size: 0.66rem; line-height: 1.5; }
+.talisman-strip__hint i { color: #7fc08f; font-size: 0.6rem; font-style: normal; }
+.talisman-strip__hint u { color: #e8b34f; font-size: 0.6rem; text-decoration: none; }
+.talisman-strip__hint--portal {
+  position: fixed;
+  z-index: 1200;
+  top: auto;
+  width: min(20rem, calc(100vw - 1.5rem));
+  max-width: none;
+  max-height: calc(100dvh - 1.5rem);
+  gap: 0.22rem;
+  padding: 0.7rem 0.8rem;
+  overflow-y: auto;
+  border-color: #9c7740;
+  background: linear-gradient(155deg, #2c2319, #17130f);
+  box-shadow: 0 0.8rem 2rem rgb(0 0 0 / 62%), inset 0 0 0 1px rgb(240 201 118 / 12%);
+  opacity: 1;
+  transform: translateX(-50%);
+}
+
+.collection-board__track--landing {
+  animation: collection-track-land 360ms steps(2, jump-none) both;
+}
+
+.collection-card--landing {
+  z-index: 8;
+  animation: collection-card-land 420ms cubic-bezier(.14,.82,.2,1.25) both;
+}
+
+.collection-card--landing .collection-card__art {
+  box-shadow:
+    0 0 0 2px #ffe099,
+    0 0 1.25rem var(--track-glow),
+    0.18rem 0.28rem 0 rgb(25 13 8 / 55%);
+}
+
+@keyframes collection-track-land {
+  0% { transform: translateX(-0.22rem); }
+  45% { transform: translateX(0.18rem); box-shadow: 0 0 1.15rem var(--track-glow); }
+  100% { transform: none; }
+}
+
+@keyframes collection-card-land {
+  0% { opacity: 0.2; transform: translateY(-0.7rem) rotate(-4deg) scale(1.38); filter: brightness(1.8); }
+  62% { opacity: 1; transform: translateY(0.1rem) rotate(1deg) scale(0.93); filter: brightness(1.18); }
+  100% { transform: none; filter: none; }
+}
+.talisman-strip__hint--portal[data-placement="above"],
+.talisman-strip__hint--portal[data-placement="below"] { transform: translateX(-50%); }
+.talisman-strip__hint--portal b { font-size: 0.92rem; }
+.talisman-strip__hint--portal em,
+.talisman-strip__hint--portal i,
+.talisman-strip__hint--portal u { font-size: 0.72rem; }
+.talisman-strip__hint--portal p { margin: 0.16rem 0; font-size: 0.78rem; line-height: 1.55; }
+.talisman-strip__hint-art {
+  display: block;
+  width: min(6rem, 28vw);
+  aspect-ratio: 2 / 3;
+  justify-self: center;
+  border: 2px solid #8b6337;
+  background: #17110d;
+  image-rendering: pixelated;
+  object-fit: contain;
+  object-position: center;
+}
+
+.game-modal__backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  overflow-y: auto;
+  background: rgb(16 13 10 / 72%);
+}
+.game-modal {
+  width: min(38rem, 100%);
+  max-height: min(88vh, 48rem);
+  overflow: auto;
+  border: 1px solid var(--game-line);
+  border-radius: 1rem;
+  background: var(--game-paper);
+  box-shadow: 0 1.2rem 4rem rgb(0 0 0 / 36%);
+}
+.game-modal__header { position: sticky; z-index: 1; top: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.6rem; align-items: start; padding: 0.8rem; border-bottom: 1px solid var(--game-line); background: var(--game-paper); }
+.game-modal__close { min-width: 3rem; }
+.game-modal__close span[aria-hidden] { font-size: 1.1rem; }
+.game-modal__close-text { display: block; font-size: 0.55rem; }
+.game-modal__body { padding: 1rem; }
+.game-modal__body h2 { margin: 0; font-size: 1.35rem; }
+.game-modal__body > p { margin: 0.35rem 0 0; color: var(--game-muted); line-height: 1.55; }
+.game-modal__content { margin-top: 1rem; }
+.game-modal__actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.8rem 1rem 1rem; }
+.game-modal__action { display: inline-flex; min-width: 6rem; flex-direction: column; align-items: center; justify-content: center; }
+.game-modal__action code { margin-top: 0.15rem; font-size: 0.52rem; opacity: 0.8; }
+.game-modal__action--primary { border-color: var(--game-red); background: var(--game-red); color: white; }
+.game-modal__action--danger { border-color: #771f1a; background: #771f1a; color: white; }
+.game-modal__action:disabled { cursor: not-allowed; opacity: 0.5; }
+
+@media (max-width: 900px) {
+  .collection-board__track { grid-template-columns: minmax(4.7rem, 0.24fr) minmax(0, 1fr); }
+}
+
+@media (max-width: 620px) {
+  .asset-placeholder__marker { min-width: 2.2rem; }
+  .asset-placeholder__description { display: none; }
+
+  .hwatu-card {
+    width: clamp(6rem, 28vw, 7rem);
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 2 / 3;
+    flex-basis: clamp(6rem, 28vw, 7rem);
+    padding: 0;
+  }
+  .hwatu-card--dense {
+    width: auto;
+    height: clamp(7rem, 32vw, 9rem);
+    flex-basis: auto;
+    padding: 0;
+  }
+
+  .collection-board,
+.talisman-strip { padding: 0.65rem; }
+  .collection-board__header > p { display: none; }
+  .collection-board__track { grid-template-columns: 1fr; gap: 0.4rem; }
+  .game-modal__backdrop { align-items: end; padding: 0; }
+  .game-modal { width: 100%; max-height: 92vh; border-radius: 1rem 1rem 0 0; }
+  .game-modal__actions { position: sticky; bottom: 0; flex-direction: column-reverse; background: var(--game-paper); }
+  .game-modal__action { width: 100%; min-height: 2.8rem; }
+}
+
+/*
+  Reduced motion turns the MOVEMENT down, not the geometry off.
+
+  This block used to say `transform: none` on hover and on the selected card.
+  That threw away the entire perspective/rotate/scale chain — and since hover is
+  the only moment the tilt exists at all, anyone whose OS had animation effects
+  switched off got no trading-card tilt whatsoever, with nothing in the UI to
+  say why. On Windows that is one toggle in Accessibility, so it is not a rare
+  configuration.
+
+  Tilt is direct manipulation: it tracks the pointer 1:1 and stops the instant
+  the hand does, which is not the autonomous animation the setting is aimed at.
+  So it stays, at a smaller amplitude, while the things that DO move on their
+  own — the idle foil sweep, the transitions — are stopped outright.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .hwatu-card {
+    --tilt-max: 5deg;
+    transition: none;
+  }
+  .hwatu-card__surface,
+  .hwatu-card__shine,
+  .hwatu-card__shine::before { animation: none !important; }
+}
+
+@media (forced-colors: active) {
+  .hwatu-card--selected { outline: 3px solid Highlight; }
+  .collection-board__slot--filled { background: Highlight; }
+}
